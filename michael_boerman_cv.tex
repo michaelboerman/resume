@@ -1,5 +1,14 @@
 \documentclass[margin,line]{res}
+
 \usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    urlcolor=blue,
+}
+
+
+\usepackage{fontawesome}
+
 
 \oddsidemargin -.5in
 \evensidemargin -.5in
@@ -26,26 +35,28 @@
 \usepackage{setspace}
 \renewcommand{\baselinestretch}{1.0} 
 
+\usepackage{array}
+\newcolumntype{L}{>{\arraybackslash}p{4.5in}}
+
 
 \begin{document}
 
 \name{Michael Boerman \vspace*{.1in}}
 
 \begin{resume}
-\section{\sc Contact Information}
+\section{\sc Contact}
 \vspace{.05in}
-\begin{tabular}{@{}p{2in}p{4in}}
-96 Gunhart Road   & {\it Cell:}  + 1 (484) 219-7563 \\  
-Mohnton, PA 19540 & {\it E-mail:}  {\ttfamily boerman.michael@gmail.com} \\
-\end{tabular}
+\faicon{envelope}  {\ttfamily hireme@michaelboerman.com} \\
+\faicon{linkedin}  \href{linkedin.com/in/michael-boerman}{\ttfamily linkedin.com/in/michael-boerman}\\
 
 \section{\sc Portfolio}
-{\it Github:} \href{https://github.com/michaelboerman}{\ttfamily github.com/michaelboerman}\\  
-{\it Writings:} \href{https://michaelboerman.medium.com/}{\ttfamily michaelboerman.medium.com}\\  
+\faBarChart \href{https://github.com/michaelboerman/lockdown_severity_index#readme}{Covid Lockdown Severity Index}\\
+\faicon{github} \href{https://github.com/michaelboerman}{\ttfamily github.com/michaelboerman}\\ 
+\faicon{medium} \href{https://michaelboerman.medium.com/}{\ttfamily michaelboerman.medium.com}\\
 
 
 \section{\sc Education}
-{\bf Harvard College}, Cambridge, MA, USA\\
+{\bf Harvard Extension School}, Cambridge, MA, USA\\
 2021 - present\\
 GPA: 4.0/4.0\\
 Graduate Certificate in Programming\\
@@ -64,8 +75,67 @@ Senior Theses: \\
 \hspace{5mm}{\it -- Economic Decision Analysis:} \href{http://tinyurl.com/BoermanCareerChoice
 }{Career Comparison Tool}
 
+\section{\sc Job History}
+{\bf Federal Reserve Board of Governors}\\
+May 2020 - {\it Present}\\
+\vspace{-.65cm}
+
+\begin{tabular}{lL}
+    {Division:  & Research \& Statistics}\\
+    {Section:   & Current-Macroeconomic Conditions}\\
+    {Job Title: & Research Assistant}\\
+    {Skills Developed: & R, Shiny, linux, shell scripts, version control (git), \LaTeX, research process, agile}\\
+    {Responsibilities: & Re-factoring code (R and MATLAB), writing new code for models, writing new code for plots and tables, collecting and cleaning data for research projects}\\
+    {Projects Worked:  & Macroeconomic now-casting models for use in monetary policy}\\
+    {Links to Work:    & -\href{https://michaelboerman.medium.com/predicting-the-present-a56ff704af0b}{Predicting the Present}\\&  -\href{https://github.com/michaelboerman/lockdown_severity_index#readme}{Covid Lockdown Severity Index}}\\
+\end{tabular}\\
 
 
+\section{\sc Intern \& Part-time Experience}
+{\bf Boeing}\\
+May 2018 - August 2018\\
+\vspace{-.65cm}
+
+\begin{tabular}{lL}
+    {Division:         & Space, Defense, and Security}\\
+    {Section:          & Systems Engineering, Integration, and Testing}\\
+    {Job Title:        & Systems Engineering Intern}\\
+    {Skills Developed: & IBM Rational DOORS, ProE CAD, project management}\\
+    {Projects Worked:  & NASA Space Launch System - EUS and ICPS}\\
+    {Responsibilities: & Created text databases of requirements for multiple sub-contractors. Traced hydrogen fuel lines throughout rocket to verify connections.}\\
+    {Links to Work:    & }\\
+\end{tabular}\\
+
+
+May 2017 - August 2017\\
+\vspace{-.65cm}
+
+\begin{tabular}{lL}
+    {Division:         & Commercial Aircraft}\\
+    {Section:          & Interiors: Monuments & Galleys}\\
+    {Job Title:        & Supply Chain Analyst Intern}\\
+    {Skills Developed: & MS Visio, supply chain management}\\
+    {Projects Worked:  & 747, 787}\\
+    {Responsibilities: & Performed supplier qualifications and assessments. Reduced installation damage.}\\
+\end{tabular}\\
+
+{\bf Fulfyld}\\
+August 201 8- December 2018\\
+\vspace{-.65cm}
+
+\begin{tabular}{lL}
+    {Division:         & Warehousing}\\
+    {Job Title:        & Process Improvement Engineer Intern}\\
+    {Skills Developed: & 5S, six-sigma, process improvement, minitab}\\
+    {Responsibilities: & Workplace organization, created and maintained work instructions, facility layout, cycle time analysis, and lean workflow. Designed and implemented ergonomic user workstations and using systematic layout planning for product locations in a new warehouse.}\\
+\end{tabular}\\
+
+\vspace{.75cm}
+\section{\sc Projects}
+
+
+
+\vspace{.75cm}
 \section{\sc Scholarships, Awards, and Grants} 
 
 {\bf School of Economics Fellowship}, Georgia Tech, 2019 (\$1,500)
@@ -83,7 +153,7 @@ Senior Theses: \\
 {\bf IFREE Workshop Sponsorship}, International Foundation for Research in Experimental Economics, 2019 (\$250)
 \vspace*{-3.5mm}
 
-{\bf Punkin Chunkin Scholarship}, World Championship Punkin Chunkin Association, 2017 (\$1,750)
+{\bf STEM Scholarship}, World Championship Punkin Chunkin Association, 2017 (\$1,750)
 \vspace*{-3.5mm}
 
 {\bf UAH Presidential Scholarship}, Univ. Alabama Huntsville, 2015-2019 (full tuituion)
@@ -92,11 +162,7 @@ Senior Theses: \\
 
 
 
-\section{\sc Research Interests}
-blank for now
-\vspace*{1.5cm}
-
-
+\vspace{.75cm}
 \section{\sc Programming Languages} 
 {\bf Advanced}:  R (tidyverse, Shiny, custom packages), SQL, git/github, Powerpoint
 \vspace*{-3mm}
@@ -107,28 +173,30 @@ blank for now
 {\bf Beginner}:  SAS, C++, HTML/CSS, Simio
 \vspace*{-3mm}
 
-{\bf Misc. Skills}: woodworking. 
+{\bf Misc. Skills}: Woodworking. 
 
+\vspace{.75cm}
 \section{\sc Certifications}
 {\bf Six Sigma} Green Belt, ASQ, Spring 2018
 \vspace*{-3mm}
 
-{\bf Tableau} desktop specialist, Tableau, Fall 2019
+{\bf Tableau} Desktop Specialist, Tableau, Fall 2019. \href{https://www.credly.com/badges/e9a605a8-1977-4a1c-ab24-149a37c7fb36/linked_in_profile}{Link}.
 \vspace*{-3mm}
 
+{\bf Engineer-in-Training} Alabama FE, NCEES, Spring 2019
+\vspace*{-3mm}
+
+{\bf Master Tutor} CLRA, Spring 2018
+\vspace*{-3mm}
+
+\vspace{.75cm}
 \section{\sc Research Assistance}
-blank for now
-\vspace*{1.5cm}
+\begin{itemize}
+  \item \href{https://www.federalreserve.gov/econres/notes/feds-notes/research-data-series-index-of-common-inflation-expectations-20210305.htm}{Common Inflation Expectations}; Hie Joo Ahn, Federal Reserve Board. R and matlab for model specification, verification, and automation. 
+\end{itemize}
 
-  
-
-\section{\sc Projects}
-\vspace*{1.5cm}
-
-\section{\sc Intern \& Part-time Experience}
-\vspace*{1.5cm}
-
-\section{\sc Educational Experience}
+\vspace{.75cm}
+ \section{\sc Educational Experience}
 
     {\bf Independent Online Tutoring}, Summer 2019\\
     {Tutored various college students in Economics, Statistics, and Data Analysis courses.}
@@ -139,7 +207,7 @@ blank for now
     {\bf Tutoring Content Development}, Univ Alabama Huntsville, Summer 2019\\
     {Created handout sheets for UAH Student Success Center for introductory statistics, thermodynamics, mechanics of materials, and calculus. Designed the curriculum from scratch and created using MS Word with PowerPoint graphics and Latex formulas.}
 
-
+\vspace{.75cm}
 \section{\sc Volunteer and Outreach}
 
 {\bf Teaching Assistant}, {\it Intro to Economics & Data Analysis}, Howard University, Fall 2019
