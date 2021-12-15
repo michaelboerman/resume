@@ -1,0 +1,12 @@
+# Ignore these files in git
+
+# tex-generatred
+*.log
+*.gz
+*.aux
+
+# R-generated
+.Rhistory
+
+# Other
+.DS_store
