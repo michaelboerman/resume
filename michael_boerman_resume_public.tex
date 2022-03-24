@@ -1,4 +1,4 @@
-\documentclass[margin,line]{res}
+\documentclass[margin, line]{res}
 
 \usepackage{hyperref}
 \hypersetup{
@@ -13,22 +13,14 @@
 \textwidth=6.0in
 \itemsep=0in
 \parsep=0in
-% if using pdflatex:
-%\setlength{\pdfpagewidth}{\paperwidth}
-%\setlength{\pdfpageheight}{\paperheight} 
 
-\newenvironment{list1}{
-  \begin{list}{\ding{113}}{%
-      \setlength{\itemsep}{0in}
-      \setlength{\parsep}{0in} \setlength{\parskip}{0in}
-      \setlength{\topsep}{0in} \setlength{\partopsep}{0in} 
-      \setlength{\leftmargin}{0.17in}}}{\end{list}}
 \newenvironment{list2}{
   \begin{list}{$\bullet$}{%
       \setlength{\itemsep}{0in}
       \setlength{\parsep}{0in} \setlength{\parskip}{0in}
       \setlength{\topsep}{0in} \setlength{\partopsep}{0in} 
-      \setlength{\leftmargin}{\dimexpr 26pt-0.05in}}}{\end{list}}
+      \setlength{\leftmargin}{\dimexpr 26pt-0.05in}}}
+    {\end{list}}
 
 \usepackage{setspace}
 \renewcommand{\baselinestretch}{1.0} 
@@ -39,9 +31,11 @@
 
 \begin{document}
 
-\name{Michael Boerman \vspace*{.1in}}
+\name{Michael Boerman \vspace*{.05in}}
+\address{Summary: Quantitative M.S. with 2+ YOE in Data Science Analytics; speciality in forecasting and automation with R.}
 
 \begin{resume}
+
 \section{\sc Contact}
 
 \faEnvelope  {\ttfamily \, michaelboerman@hey.com} \\
@@ -51,19 +45,20 @@
 
 
 \section{\sc Portfolio}
+\faBriefcase \, \href{https://www.michaelboerman.com/}{\ttfamily  \, www.michaelboerman.com}\\
 \faIcon{video} \,\, \href{https://www.youtube.com/channel/UCxFMrMb6PrS7SOrQi-BfMUw/videos?view=0&sort=p&flow=grid}{ Explained by Michael YouTube channel}\\
-\faChartLine \,\, \href{https://github.com/michaelboerman/lockdown_severity_index#readme}{\, Covid Lockdown Severity Index}\\
-\faBriefcase \,\, \href{https://www.michaelboerman.com/}{\ttfamily  \, www.michaelboerman.com}\\
+\faChartLine \,\, \href{https://michaelboerman.shinyapps.io/covid_percentiles/}{\, Covid: How Long Did You Last?}\\
 \vspace{-.35cm}
 
+\section{\sc Competencies} 
+Time series analysis, regression analysis, predictive modeling, forecasting, database development, data visualization, big data and small data science, Infrastructure as Code, git version control
+
 \section{\sc Programming Languages} 
-{\bf Advanced}:  R (tidyverse, Shiny, packages), \LaTeX, regex, git/version control, linux
+{\bf Advanced}:  SQL, R (Shiny, Rmarkdown, package development), \LaTeX, git (github and DevOps)
 \vspace*{-3mm}
 
-{\bf Proficient}: SQL, Matlab, python, Tableau, Minitab, Adobe Creative Suite
-\vspace*{-3mm}
+{\bf Proficient}: python, Tableau, Matlab, Adobe Creative Suite
 
-{\bf Beginner}:  SAS, Stata, C++, HTML/CSS, javascript
 
 \section{\sc Professional \\ Job History}
 {\bf Federal Reserve Board of Governors}\\
@@ -72,66 +67,54 @@
 
 Financial Systems Analyst (Data Engineering, DevOps) \hfill December 2021 - Present\\
 \hspace*{3mm}
-    Projects Worked: Data Engineering, ETL, and analysis for bank regulation data
+    Summary: Data Engineering, ETL, and analysis for bank regulation data
     \hspace{5cm}
     \begin{list2}
-        \item Develop internal R package with convenience functions to save time on repeated and complex SQL queries, saving innumerable lines of code and saving 6 people each up to 2 hours per week.
-        \item Created data analysis templates for discovering trends outliers, etc using Rmarkdown, which is up to 3x faster than existing Excel process.
-        \item Replaced manual Excel sheet with automatic dashboards using R Shiny, saving 6 people each up to 60 minutes per week and saving 25+ people up to 30 minutes per week.
+        \item Develop 2 internal R packages with convenience functions to save time on repeated and complex SQL queries, saving innumerable lines of code and saving 6 people each up to 4 hours per week.
+        \item Created data analysis templates for discovering trends and outliers using Rmarkdown which is up to 3x faster than existing Excel process and less error-prone.
+        \item Replaced manual Excel sheet with automatic dashboards using R Shiny, saving 6 people each up to 3 hours per week and saving 25+ people up to 1 hour per week.
     \end{list2}
 
 
-Senior Research Assistant (Data Science, DevOps) \hfill May 2020 - December 2021
-\\
+Senior Research Assistant (Data Science, DevOps) \hfill May 2020 - December 2021\\
 \hspace*{3mm}
-    Projects Worked: Macroeconomic forecasting models used in U.S. monetary policy\\
+    Summary: Developed forecasting models used in FOMC monetary policy\\
 \hspace*{3mm}
     Links to Work:  \href{https://michaelboerman.medium.com/predicting-the-present-a56ff704af0b}{Predicting the Present} and   \href{https://github.com/michaelboerman/lockdown_severity_index#readme}{Covid Lockdown Severity Index}
     
     \begin{list2}
-        \item Wrote and refactored code in R and Matlab for more than 10 novel statistical models and over 50 unique visualizations across 30 repositories.
-        \item Developed and maintained internal 3 internal R packages that were used by more than 5 teams across in more than 250 scripts.
-        \item Built and maintained a documentation website in R Shiny, replacing the need for scattered word documents and saving 3 people up to 2 hours per week.
+        \item Wrote and refactored code in R and Matlab for more than 10 statistical models and over 50 unique visualizations across 30 repositories.
+        \item Developed and maintained 3 internal R packages with over 100 functions that were used in more than 250 scripts.
+        \item Built a documentation website in R Shiny, replacing the need for scattered word documents and saving 3 people up to 2 hours per week.
         \item Studied econometric forecasting models using state-space time series, factor models, and ARIMA.
 \end{list2}
 
 
-
-\vspace{-.05cm}
 \section{\sc Education}
 
-{\bf Georgia Institute of Technology}, Atlanta, GA, USA \hfill Fall 2019 - Spring 2020\\
-GPA: 4.0\\
-M.S. in Economics, concentration in econometrics\\
+{\bf Georgia Institute of Technology}, Atlanta, GA, USA \hfill August 2019 - May 2020\\
+M.S. in Economics, concentration in statistics and econometrics\\
+GPA: 4.0
 
-\vspace{-.35cm}
-{\bf University of Alabama in Huntsville}, Huntsville, AL, USA \hfill Fall 2015 - Spring 2019 \\
-GPA: 4.0\\
+\vspace{-1mm}
+
+{\bf University of Alabama in Huntsville}, Huntsville, AL, USA \hfill August 2015 - May 2019 \\
 B.S. in Industrial \& Systems Engineering; Minor in Astrophysics\\
+GPA: 4.0
 
 
-\vspace{-.35cm}
+\vspace{-1mm}
 \section{\sc Internship \\ Experience}
 NASA Space Launch System (systems engineering), Boeing 787 (supply chain management), \\ General Electric (quality engineering), Fulfyld (process improvement engineering). 
 
 
 
-\vspace{.25cm}
-
-
-
-\vspace{.15cm}
-
 \section{\sc Certifications}
-{\bf Six Sigma} Green Belt, ASQ, Spring 2018
+{\bf Six Sigma} Green Belt, ASQ, April 2018
 \vspace*{-3mm}
 
-{\bf Tableau} Desktop Specialist, Tableau, Fall 2019. \href{https://www.credly.com/badges/e9a605a8-1977-4a1c-ab24-149a37c7fb36/linked_in_profile}{Link}.
+{\bf Tableau} Desktop Specialist, Tableau, September 2019. \href{https://www.credly.com/badges/e9a605a8-1977-4a1c-ab24-149a37c7fb36/linked_in_profile}{Link}.
 \vspace*{-3mm}
-
-{\bf Engineer-in-Training} Alabama FE, NCEES, Spring 2019
-\vspace*{-3mm}
-
 
 \end{resume}
 
