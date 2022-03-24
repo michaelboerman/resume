@@ -215,16 +215,16 @@
 %
 \def\@printcentername{\begingroup
   % print the name centered
-  \leavevmode\hbox to \textwidth{\hfil\@tablebox{\namefont\@name}\hfil}\par
+  \leavevmode\hbox to \textwidth{\hfill\@tablebox{\namefont\@name}\hfill}\par
   \@ifundefined{@addressone}{%
     % do nothing
   }{%
     \@ifundefined{@addresstwo}{
       % only one address
-      \leavevmode\hbox to \textwidth{\hfil\@tablebox{\@addressone}\hfil}\par
+      \leavevmode\hbox to \textwidth{\hfill\@tablebox{\@addressone}\hfill}\par
     }{
       % two addresses
-      \leavevmode\hbox to \textwidth{\@tablebox{\@addressone}\hfil
+      \leavevmode\hbox to \textwidth{\@tablebox{\@addressone}
 				     \@tablebox{\@addresstwo}}\par
     }%
   }%
@@ -238,19 +238,19 @@
 \def\@linename{\begingroup
   \def\\{, }
   {\namefont\@name}
-  \vskip 2pt
-  \fullline
-  \vskip 2pt
   % where do you live?
+  \vskip 2pt
   \@ifundefined{@addressone}{%
     % do nothing
   }{%
     \leavevmode\hbox to \textwidth
-      {\hfill\vbox{\hbox{\@addressone}
+      {\vbox{\hbox{\@addressone}
 		   \hbox{\@addresstwo}
 		  }%
       }\par
   }
+  \fullline
+  \vskip 2pt
 \endgroup}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -772,12 +772,12 @@
 % with everything in the left of its column
 
 \@secpenalty = -500
-\topmargin 0pt
+\topmargin -25pt
 \headheight 0pt
 \headsep 0pt
 \textheight 9in
 \parindent 0pt
-\topmargin 0in
+%\topmargin 0in
 \oddsidemargin 0pt
 \evensidemargin 0pt
 \marginparwidth 0pt
