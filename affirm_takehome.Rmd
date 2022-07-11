@@ -1,0 +1,1096 @@
+---
+title: "Affirm Bakery Competition"
+author: "Michael A. Boerman"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: kable
+    toc: yes
+    toc_float: yes
+    code_folding: hide
+---
+
+# Prompt
+
+There is a robot bakery with baker bots, AffirmBaker and CandidateBaker, competing to maximize the value received from the goods it bakes over the course of 10 days (*num_days* variable).
+
+On each day, the bakery receives orders for 10 items (*items_per_day* variable) that need to be made (*generate_batch* function*).* Each item to be made is represented by a (time, value) tuple indicating the amount of time it takes to make the baked good and the value received for fulfilling the baked good.
+
+After this list is made, the baker bots take turns choosing which item they'll make (*allocate_production* function). Once the list is exhausted, the baker bots work in parallel to make the selected items (*run_bakery* function), fulfilling as many orders as they can in the allotted time (*time_per_day* variable). After the day is complete, the value of the completed goods are tallied; any unfinished item that each baker had selected remains on their list for the following day.
+
+When given the option, AffirmBaker always picks the item with the highest reward, and CandidateBaker always picks the item with the highest reward per unit time.
+
+# The Questions
+
+1.  How frequently does CandidateBaker win? How does the *time_per_day* affect the probability of victory for AffirmBaker vs. CandidateBaker? Why is this the case?
+
+2.  Modify the order of item_list in AffirmBaker to improve its performance.
+
+3.  Knowing the strategies of CandidateBaker and AffirmBaker, Create a third baker with your name that beats both AffirmBaker and CandidateBaker and prove it.
+
+# The Answers in Summary
+
+1.  With a 10-day competition, using `time_per_day = 8`, and using my default randomly-created item list, CandidateBaker wins most days and usually wins overall at the end of the 10 days. I simulated 25 competitions of 10 days and CandidateBaker won each of the 25 iterations.
+
+    Altering the `time_per_day` parameter drastically affects the outcome. When doubled to `time_per_day = 16`, the results essentially flip: AffirmBaker wins most days and wins the overall most iterations.
+
+    While CandidateBaker tends to pick items with short times, AffirmBaker takes no regard to time. With small days, it often ends with items left in its queue unable to be produced. Fewer items, on average, lead to more wasted time per day. At the end of 10 days, AffirmBaker makes fewer items in total than CandidateBaker and has more down time. Both these contribute to a lower total score.
+
+2.  In the initial setup AffirmBaker orders the items in its list based on value (starting with highest value at the top and ending with lowest value). However, after seeing the success of CandidateBaker choosing and ordering based on value/time, I order AffirmBaker based on value/time. I also experiment with ordering on time.
+
+    The results of both experiments produce neither statistically significant nor materially significant difference in results. AffirmBaker averages the same win percentage as the default ordering of value.
+
+3.  Having previously tested different ordering of items after selected, I then experiment with different maximizing functions prior to selection. I test making the bot pick based on value/time (default), time, and value. I find that condition on external environmental variables, and given only time and value parameters of the items, the only solution to increasing performance is to match the other bot's maximizing function and have the new bot pick first.
+
+# The Code: Step-by-Step
+
+## Setup
+
+First, I'll load packages and create some fixed parameters, as given in the prompt. All these packages are from [the tidyverse](https://www.tidyverse.org)!
+
+```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# packages for data manipulation
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(stringr)
+
+# packages for plotting.
+library(ggplot2)
+library(ggridges)
+```
+
+```{r fixed, class.source = "fold-show"}
+# the number of "days" is the number of times the program will run
+num_days <- 10
+
+# the number of items is the number of "orders" received by the bakery.
+items_per_day <- 10
+
+# this is an assumption, and also is the same units as the "time" key in the list of item times and values.
+time_per_day <- 8
+```
+
+## Initiate Counters
+
+I'll make this a function that will be repeated every time a new experiment is run.
+
+1.  `daily_values`: A counter for the value received from the goods baked by each bot. This is independent of the utility function of each bot; it is the value provided to the customer/bakery.
+
+2.  `item_selections`: A counter with the selection of items picked by each bot.
+
+3.  `unmade_items`: A counter with the previous days' unmade items.
+
+```{r class.source = "fold-show"}
+
+initiate_blank_counters <- function() {
+  # This is an empty data frame that will hold the day's final value created by each bot.
+  daily_values <<- tribble(~"day", ~"AffirmBaker", ~"CandidateBaker")
+  
+  # This is an empty data frame that will hold the numerical index that each bot picks in the process of dividing up the day's orders. 
+  item_selections <<- tribble(~"AffirmBaker", ~"CandidateBaker")
+  
+  unmade_items <<- list(
+  AffirmBaker    = tribble(~"index", ~"time", ~"value"),
+  CandidateBaker = tribble(~"index", ~"time", ~"value")
+  )
+}
+
+initiate_blank_counters()
+```
+
+Now we'll need to generate a list of items. These definitions will highly affect the outcomes, and I imagine the selection of distributions to have a large effect on outcome, too.
+
+```{r class.source = "fold-show"}
+generate_batch <- function(item_count = items_per_day, time_mean = 2, time_sd = 1, value_mean = 5, value_sd = 2) {
+  
+  # generate random times and truncate to one decimal place
+  # note: the units of time are the same as the units in time_per_day.
+  # I interpret this pretty much as hours.
+  random_times <- rnorm(n = item_count, mean = time_mean, sd = time_sd) |> 
+    round(1)
+  
+  # generate random values to pair with the random times.
+  random_values <- rnorm(n = item_count, mean = value_mean, sd = value_sd) |> 
+    round(1)
+  
+  # now create a dataframe with these two and a numerical index for labelling sake.
+  items_list <- data.frame(
+    index = seq(1, item_count),
+    time  = random_times,
+    value = random_values
+  )
+}
+```
+
+For communication's sake, I'll visualize the value-time combinations created.
+
+```{r}
+items_list <- generate_batch(items_per_day)
+
+# Create a scatter plot of time-value. 
+items_list |> 
+  ggplot(aes(x = time, y = value)) +
+  geom_point() +
+  theme_minimal() +
+  ggtitle("Today's Orders")
+
+```
+
+After we assign the day's orders, we'll take another look at this plot to see which bot selected which order. Hint: While AffirmBaker will pick the dots highest on the y-axis regardless of their x-axis location, CandidateBaker will calculate the value-per-time and pick the highest among that ratio.
+
+## Item Selection
+
+I'll create a function that ranks a bot's preference. Its arguments are the list of bakery items created and the function which a bot wishes to maximize. Its output is a dataframe with a list of items that each bot wants, in the order it wants them.
+
+```{r class.source = "fold-show"}
+rank_preference <- function(items_list, maximizing_metric) {
+  
+  # test case
+  # maximizing_metric <- "value/time"
+  
+  if (!maximizing_metric %in% c("value", "value/time", "time", "1/time")) stop("The maximizing metric you entered is not a valid option at this time. Please enter one of 'value' or 'value/time', 'time', or '1/time'.")
+  
+  
+  # start with the list of options for today's bakery queue.
+  ranked_items <- items_list |> 
+    
+    # filter out any that have a negative time or value.
+    filter(time > 0) |> 
+    filter(value > 0) |> 
+    
+    # create a new column to showcase the metric at hand
+    # (this is computationally un-ncessary, but helpful to see!)
+    mutate(maximizing_metric = 
+      case_when(
+        maximizing_metric == "value"      ~ value,
+        maximizing_metric == "time"       ~ time,
+        maximizing_metric == "value/time" ~ round(value / time, 2),
+        maximizing_metric == "1/time"     ~ round(1 / time, 2),
+        
+      )
+    ) |> 
+    
+    # arrange based on the maximizing metric that the bot desires, high to low.
+    arrange(desc(maximizing_metric))
+  
+  return(ranked_items)
+}
+```
+
+And now to execute the function:
+
+```{r class.source = "fold-show"}
+# Order the list for AffirmBaker's preference (value) and for CandidateBaker's preference (value/time).
+bots_preffered_items <- list(
+  AffirmBaker    = rank_preference(items_list, "value"),
+  CandidateBaker = rank_preference(items_list, "value/time")
+)
+```
+
+```{r}
+bots_preffered_items |> map("index")
+```
+
+Next, this function is the "draft pick" of the day: the two bots take turns picking which item they want from the line up.
+
+This code block works in the following manner:
+
+1.  Look at the preference list of the bot that goes first.
+2.  Grab the most-preferred item from that list and insert it into the `item_selections` object for that bot.
+3.  Remove that item from the list of possible choices.
+4.  The next bot takes its turn, running steps 1-3.
+5.  Repeat until no more options are left for either bot.
+
+```{r class.source = "fold-show"}
+allocate_production <- function(first_bot) {
+  
+  # test value
+  # first_bot <- "CandidateBaker"
+  
+  # sort out which bot goes second
+  if (first_bot == "CandidateBaker") {
+    second_bot <- "AffirmBaker"
+  } else if (first_bot == "AffirmBaker") {
+    second_bot <- "CandidateBaker"
+  } else {
+    stop("Baker Bot provided is not a valid input. Please enter one of 'CandidateBaker' or 'AffirmBaker'.")
+  }
+  
+  # initiate the draft pick; keep looping until all items are picked.
+  
+  i <- 1
+  while (nrow(bots_preffered_items[[first_bot]]) > 0 & nrow(bots_preffered_items[[second_bot]] > 0)) {
+    
+      # for inserting into the correct row in the selection dataframe.
+      # it's not i, since i will end at 10 total items but each bot only gets 10/2 = 5 items.
+      row_index <- floor((i+1)/2) 
+      
+      
+      # odd number assignments (the start)
+      if (i %% 2 == 1) {
+        
+        # which item does the bot want?
+        # grabs it from the top of the list.
+        bot_wants_this_item <- bots_preffered_items[[first_bot]][["index"]][1]
+        
+        # add it to the bot's queue.
+        item_selections[row_index, first_bot] <- bot_wants_this_item
+        
+      } else if (i %% 2 == 0) {
+        
+        bot_wants_this_item <- bots_preffered_items[[second_bot]][["index"]][1]
+        
+        item_selections[row_index, second_bot] <- bot_wants_this_item
+      }
+        
+      # remove the item from BOTH bots' preffered lists
+      # (ie, "take the item off the bakery's queue")
+      bots_preffered_items <- bots_preffered_items |> 
+        map(function(x) {
+          x |> filter(index != bot_wants_this_item)
+        })
+      
+      i <- i+1
+  }
+  return(item_selections)
+}
+```
+
+Now we have a list of items in the queue in an order that maximizes each bot's utility functions:
+
+```{r echo=FALSE, class.source = "fold-show"}
+item_selections <- allocate_production(first_bot = "CandidateBaker")
+
+item_selections
+```
+
+Let's look back at that scatter plot and identify which bot chose which dot.
+
+```{r}
+plot_items_picked <- function() {
+  items_list |> 
+    mutate(
+      value_per_time = value/time,
+      chosen_by_this_bot = case_when(
+        index %in% item_selections$AffirmBaker    ~ "AffirmBaker",
+        index %in% item_selections$CandidateBaker ~ "CandidateBaker",
+      )
+    ) |> 
+    arrange(desc(value)) |> 
+    ggplot(aes(x = time, y = value, color = chosen_by_this_bot)) +
+    geom_point() +
+    geom_path() +
+    theme_minimal() +
+    labs(
+      title = "Who Chose What?",
+      subtitle = "Plotting the order of selection for each bot",
+      # y = "Value of Produced",
+      # x = "Time to Produce"
+    ) +
+    theme(
+      legend.position = "top",
+      legend.title = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank()
+    ) +
+    scale_x_continuous(breaks = function(x) seq(ceiling(x[1]), floor(x[2])+1, by = 0.5)) +
+    scale_y_continuous(breaks = function(x) seq(ceiling(x[1]), floor(x[2]), by = 1)) +
+    NULL
+}
+
+plot_items_picked()
+```
+
+## Item Queues
+
+The work day is only `time_per_day` = `r time_per_day` units of time long, but the total time required to bake all the items on a bot's list may exceed this! We'll need each bot to filter out items that it *can* make today from the items that it *can't* make today. Per the prompt, the excluded items will be recycled back into the bot's queue for the next day.
+
+Embedded in this code is an assumption that a bot cannot partially complete an item. A baker - even if robotic - cannot make half a loaf of dough before clocking out and return to it the next day!
+
+Below is a function that determine which items the bot can and cannot make today. Why would a bot not be able to make something? If the cumulative time of baking exceeds the time available in a day, it's lights-out.
+
+The function to find what a bot can make in a day works in the following fashion:
+
+1.  Start with the list of all items (and their times and values) on the queue for both bots.
+2.  Pick out just the items that this bot has chosen.
+3.  Order those items in the same order that the bot wants them in (ie, high-to-low order according to its utility function).
+4.  Calculate the rolling total time to bake ("`cumsum`" = "sum of cumulative")
+5.  Pick out just the items that can fit into today's available time.
+
+**NOTE**: The bot will use a clever trick to fit more items into its work day than it might otherwise. A simple rule of ranking items based on the bot's performance metric and then calculating cumulative time to make the items would cause the bot to stop as soon as an item exceeds the remaining time in the day. However, I use a rule that continues to search for items further down on the list that may be of little value, but also little time. Since the bots don't fatigue, diminishing marginal value is not a concern: the bakery still wants these faster items to be made, regardless of their value.
+
+```{r class.source = "fold-show"}
+todays_possibile_items <- function(bot_name) {
+  
+  # test values
+  # bot_name <- "AffirmBaker"
+  
+  item_queue <- items_list |> 
+    filter(time > 0) |> 
+    filter(value > 0) |> 
+    filter(index %in% pull(item_selections[bot_name])) |> 
+    arrange(match(index, pull(item_selections[bot_name]))) |> 
+    full_join(unmade_items[[bot_name]], by = c("index", "time", "value")) |> 
+    mutate(cumulative_time = cumsum(time)) |> 
+    mutate(make_today = case_when(
+      row_number() == 1 & time <= time_per_day ~ "yes"
+    )) |> 
+    mutate(time_spent_making = case_when(
+      make_today == "yes" ~ cumulative_time,
+    )) 
+  
+  # now, we'll need to check all lag combinations to see if any items lower on the list that have small times can be squuzed in. 
+  # this is iterative, because we check each row only after previous row is checked.
+  
+  
+  for (i in 2:nrow(item_queue)) {
+    if (item_queue$time[i] + item_queue$time_spent_making[i-1] <= time_per_day) {
+      item_queue$make_today[i]        <- "yes"
+      item_queue$time_spent_making[i] <- item_queue$time_spent_making[i-1] + item_queue$time[i]
+    } else {
+      item_queue$make_today[i]        <- "no"
+      item_queue$time_spent_making[i] <- item_queue$time_spent_making[i-1]
+    }
+  }
+  return(item_queue)
+}
+```
+
+```{r}
+# execute the code:
+daily_items <- map(
+  .x = set_names(c("yes", "no")),
+  .f = ~map2(
+    .x = .x, 
+    .y = c("AffirmBaker", "CandidateBaker"),
+    .f = ~todays_possibile_items(.y) |> 
+      filter(make_today == .x) |> 
+      select(-cumulative_time)
+  ) |> setNames(c("AffirmBaker", "CandidateBaker"))
+)
+
+map(daily_items[["yes"]], knitr::kable)
+map(daily_items[["no"]], knitr::kable)
+```
+
+There may be the case that the bot's cumulative baking time does not exactly match the time available per day. This function calculates the lost time due to a finite item list:
+
+```{r class.source = "fold-show"}
+calculate_time_not_run_today <- function(todays_items) {
+  
+  time_run <- todays_items |> 
+    select("time_spent_making") |> 
+    max()
+  
+  return(time_per_day - time_run)
+}
+```
+
+```{r}
+times_not_run <- map(daily_items[["yes"]], calculate_time_not_run_today)
+
+times_not_run
+```
+
+## Run a Day's batch
+
+Next, "run" the bakery by calculating the value produced by each bot.
+
+```{r class.source = "fold-show"}
+# function to calculate value added today
+calculate_value_today <- function(todays_items) {
+  todays_value <- todays_items |> 
+    mutate(cumulative_value = cumsum(value)) |> 
+    pull(cumulative_value) |> 
+    max()
+  return(todays_value)
+}
+```
+
+```{r class.source = "fold-show"}
+# function to calculate overall results
+# Now that we have daily values for each bot, aggregate the info.
+# I'll create a column for 
+# - who won that day, 
+# - each bot's cumulative value produced,
+# - which bot is winning over all to-date.
+# 
+calculate_results <- function() {
+  overall_results <- daily_values |> 
+  mutate(
+    who_won_today = case_when(
+      AffirmBaker > CandidateBaker ~ "AffirmBaker",
+      AffirmBaker < CandidateBaker ~ "CandidateBaker",
+      AffirmBaker == CandidateBaker ~ "tie"
+    ),
+    cumulative_affirm    = cumsum(AffirmBaker),
+    cumulative_candidate = cumsum(CandidateBaker),
+    whos_winning_so_far = case_when(
+      cumulative_affirm > cumulative_candidate ~ "AffirmBaker",
+      cumulative_affirm < cumulative_candidate ~ "CandidateBaker",
+      cumulative_affirm == cumulative_candidate ~ "tie",
+    )
+  )
+  return(overall_results)
+}
+```
+
+```{r}
+# execute the function
+todays_value <- map(daily_items[["yes"]], calculate_value_today)
+
+# add the results to our tally df
+daily_values <- daily_values |> 
+  add_row(
+    day            = 1,
+    AffirmBaker    = todays_value$AffirmBaker,
+    CandidateBaker = todays_value$CandidateBaker
+  )
+
+```
+
+## View Results
+
+Finally, at the end, print the cumulative daily values:
+
+```{r}
+daily_totals <- daily_values |> 
+  mutate(
+    cumulative_affirm    = cumsum(AffirmBaker),
+    cumulative_candidate = cumsum(CandidateBaker)
+  )
+
+# show end results thus far:
+daily_totals |> 
+  select(cumulative_affirm, cumulative_candidate) |> 
+  tail(1)
+```
+
+This concludes one day in the bakery!
+
+# The Code: Simulation
+
+Now we'll iterate through the steps multiple times to represent multiple days. First, create a function that represents the steps. Second, iterate over this. Third, view the results.
+
+## Order of Operations
+
+This function is the accumulation of previous steps:
+
+1.  Create a list of items for the bakery for the day.
+2.  Have each bot rank the items it wants.
+3.  Run the draft pick for each bot to take turns selecting items.
+4.  Have each bot calculate which items it will run in a given day, noting that some items may not fit into the amount of time remaining in the day.
+5.  Record the items that the bot could not squeeze into today's run, which will be re-added to the queue in step 4 in the next iteration.
+6.  Calculate the value added to the bakery by each bot today.
+
+```{r class.source = "fold-show"}
+run_bakery <- function(item_count = items_per_day, time_mean = 2, time_sd = 1, value_mean = 5, value_sd = 2, first_bot = "CandidateBaker") {
+  
+  # Step 1
+  item_selections <- tribble(
+    ~"AffirmBaker", ~"CandidateBaker",
+  )
+  
+  items_list <<- generate_batch(item_count, time_mean, time_sd, value_mean, value_sd)
+  
+  # Step 2
+  bots_preffered_items <<- list(
+    AffirmBaker    = rank_preference(items_list, "value"),
+    CandidateBaker = rank_preference(items_list, "value/time")
+  )
+  
+  # Step 3
+  item_selections <<- allocate_production(first_bot = first_bot)
+  
+  # Step 4
+  daily_items <<- map(
+  .x = set_names(c("yes", "no")),
+  .f = ~map2(
+    .x = .x, 
+    .y = c("AffirmBaker", "CandidateBaker"),
+    .f = ~todays_possibile_items(.y) |> filter(make_today == .x)
+  ) |> 
+    setNames(c("AffirmBaker", "CandidateBaker"))
+)
+  
+  # Step 5
+  unmade_items <<- daily_items$no
+  
+  # Step 6
+  todays_value <<- map(daily_items[["yes"]], calculate_value_today)
+  
+}
+```
+
+## Running the simulation
+
+And now we'll execute the program!
+
+```{r class.source = "fold-show"}
+run_competition <- function(start_day, num_days = num_days, first_bot = "CandidateBaker") {
+  
+  for (i in start_day:num_days) {
+    
+    # Run all the functions!
+    todays_results <<- run_bakery(item_count = items_per_day, time_mean = 2, time_sd = 1, value_mean = 5, value_sd = 2, first_bot)
+    
+    # Add the results to our scoreboard
+    daily_values <<- daily_values |>
+      add_row(
+        day            = i,
+        AffirmBaker    = todays_results$AffirmBaker,
+        CandidateBaker = todays_results$CandidateBaker
+      )
+  }
+}
+
+# A note on for-loops: I don't run into processing time issues for num_days <= 100, so I won't optimize this for performance at this time by changing to a map function as I do elsewhere.
+```
+
+```{r}
+# Start at day 2, since we already did day 1 in getting here.
+run_competition(start_day = 2, num_days)
+daily_totals <- calculate_results()
+```
+
+## Visualizing the results
+
+I love graphs, so let's make these results data more digestible:
+
+```{r}
+plot_daily_results <- function() {
+  
+  pct_won       <- daily_totals |> count(who_won_today) |> mutate(pct = round(n/sum(n), 2))
+  pct_affirm    <- pct_won |> filter(who_won_today == "AffirmBaker") |> pull(pct) 
+  pct_candidate <- pct_won |> filter(who_won_today == "CandidateBaker") |> pull(pct)
+  
+  daily_totals |> 
+    select(day, ends_with("Baker")) |> 
+    pivot_longer(
+      cols      = ends_with("Baker"),
+      names_to  = "bot",
+      values_to = "score"
+    ) |> 
+    ggplot(aes(x = day, y = score, color = bot)) +
+    geom_point() +
+    geom_line() +
+    annotate(
+      geom = "text",
+      x = max(daily_totals$day)/2+0.5, 
+      # y = min(daily_totals$AffirmBaker, daily_totals$CandidateBaker),
+      y = 3,
+      label = str_glue("
+        Percent of days won by Affirm: {pct_affirm*100}%
+        Percent of days won by Candidate: {pct_candidate*100}%
+      ")
+    ) +
+    theme_minimal() +
+    labs(
+      title = "Daily Scoreboard",
+      subtitle = "Vizualizing who came out on top (literally). Each day's score is independent from previous day.",
+      y = "Value Produced by Bot",
+      x = "Day"
+    ) +
+    theme(
+      legend.position = "top",
+      legend.title = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank()
+    ) +
+    scale_x_continuous(breaks = unique(daily_totals$day)) +
+    scale_y_continuous(limits = c(0, NA)) +
+    NULL
+}
+```
+
+```{r}
+plot_daily_results()
+```
+
+```{r}
+plot_daily_boxplots <- function() {
+  daily_totals |> 
+    select(day, ends_with("Baker")) |> 
+    pivot_longer(
+      cols      = ends_with("Baker"),
+      names_to  = "bot",
+      values_to = "score"
+    ) |> 
+    ggplot(aes(x = bot, y = score)) +
+    geom_boxplot() +
+    theme_minimal() +
+    labs(
+      title    = "Daily Score Summary",
+      subtitle = "Vizualizing the distributions of daily scores.",
+      y        = "Daily Value Produced by Bot"
+    ) +
+    theme(
+      legend.position  = "top",
+      legend.title     = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      axis.title.x     = element_blank()
+    ) +
+    NULL
+}
+```
+
+I'd also like to look at this from a statistical perspective:
+
+```{r}
+plot_daily_boxplots()
+```
+
+```{r message=FALSE, warning=FALSE}
+plot_daily_histograms <- function() {
+  daily_totals |> 
+    select(day, ends_with("Baker")) |> 
+    pivot_longer(
+      cols      = ends_with("Baker"),
+      names_to  = "bot",
+      values_to = "score"
+    ) |> 
+    ggplot(aes(x = score, y = bot, fill = bot)) +
+    geom_density_ridges() +
+    theme_ridges() +
+    theme(
+      legend.position = "none",
+      axis.title.y = element_blank(),
+      axis.title.x = element_blank(),
+      panel.grid   = element_blank()
+    )
+}
+```
+
+And we'll compare the two with histograms as well:
+
+```{r}
+plot_daily_histograms()
+```
+
+```{r}
+plot_cumulative_results <- function() {
+  daily_totals |> 
+    select(day, starts_with("cumulative")) |> 
+    pivot_longer(
+      cols      = starts_with("cumulative"),
+      names_to  = "bot",
+      values_to = "score"
+    ) |> 
+    mutate(
+      bot = case_when(
+        bot == "cumulative_affirm" ~ "Affirm",
+        bot == "cumulative_candidate" ~ "Candidate"
+      )
+    ) |> 
+    ggplot(aes(x = day, y = score, color = bot)) +
+    geom_point() +
+    geom_line() +
+    theme_minimal() +
+    annotate(
+      geom = "text",
+      x = max(daily_totals$day)/2+0.5, 
+      y = max(daily_totals$cumulative_affirm, daily_totals$cumulative_candidate),
+      # y = 3,
+      label = str_glue("
+        The winner is: {ifelse(tail(daily_totals$whos_winning_so_far, 1) == 'CandidateBaker', 'The Candidate!', 'Affirm :( ')}
+      ")
+    ) +
+    labs(
+      title = "Running Scoreboard",
+      subtitle = "Vizualizing who came out on top (literally) as of each day. The final day shows the overall winner.",
+      y = "Total Value Produced by Bot",
+      x = "Day"
+    ) +
+    theme(
+      legend.position = "top",
+      legend.title = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank()
+    ) +
+    scale_x_continuous(breaks = unique(daily_totals$day)) +
+    scale_y_continuous(limits = c(0, NA)) +
+    NULL
+}
+```
+
+But to answer the real question, who came out on top at the end of the simulation (`num_days` = `r num_days`), we need to look at the cumulative scores:
+
+```{r}
+plot_cumulative_results()
+```
+
+# The Answers in Depth
+
+## 1: Who Won?
+
+*How frequently does CandidateBaker win? How does the time_per_day affect the probability of victory for AffirmBaker vs. CandidateBaker?  Why is this the case?*
+
+Note: To win, a bot must produce the most value in a given day or in a given n-day competition.
+
+With a 10-day competition, using `time_per_day = 8`, and using my default randomly-created item list, CandidateBaker wins most days and usually wins overall at the end of the 10 days. I simulated 25 competitions of 10 days and CandidateBaker won each of the 25 iterations.
+
+Altering the `time_per_day` parameter drastically affects the outcome. When doubled to `time_per_day = 16`, the results essentially flip: AffirmBaker wins most days and wins the overall most iterations.
+
+The value at which `time_per_day` causes a 50/50 distribution of daily results is approximately 9.
+
+Why is this the case? To understand the impact of `time_per_day`, it's useful to understand the distribution of times of the items in the queue. If the average time to make an item is 7, but `time_per_day` is 8, then not many items could be made by either bot. On the other hand, if the average time to make an item is 0.5 and there are 16 hours in a day, the bots will have no problems making as many items as are avialable to them.
+
+CandidateBaker bot tends to pick items on the left side of the scatter plot, which represent short times, while AffirmBaker tends to pick items from top to bottom, regardless of the time. Since CandidateBaker snatches the items with short times, AffirmBaker ends up with longer times. A short day means fewer items can fit in the bot's queue.
+
+I see this empirically: with short days, AffirmBaker tends to have more overflow items each day (items that cannot be made because they take more time than what is left in the day) than CandidateBaker. With long days relative to the item's average time to produce, each bot can make all the items it wants without having to make cuts.
+
+In summary, AffirmBaker's performance improves when the time in a day increases relative to the average time to produce an item. This can be achieved by increasing `time_per_day` or by decreasing the time to produce each item.
+
+## 2: Improve AffirmBaker's performance
+
+*Modify the order of item_list in AffirmBaker to improve its performance.*
+
+-   The initial order of the items in `item_list` for AffirmBaker is the order of its preferred items: sorted high to low on value.
+
+-   However, seeing the result of CandidateBaker's approach of sorting on value/time, I will replicate this ordering.
+
+-   This will not replace the items selected, only the order in which the bot will setup its order of items to be made in a given day.
+
+In order to test this, I'll need to make sure the `time_per_day` is not so high that AffirmBaker will win, nor so low that any list modifications would be choked out.
+
+```{r class.source = "fold-show"}
+# Set it to value in which AffirmBaker has slight disadvantage, but is near 50-50.
+time_per_day <- 9
+
+unmade_items <- list(
+  AffirmBaker    = tribble(~"index", ~"time", ~"value"),
+  CandidateBaker = tribble(~"index", ~"time", ~"value")
+)
+```
+
+### Sort on value/time and time
+
+```{r class.source = "fold-show"}
+run_bakery <- function(item_count = items_per_day, time_mean = 2, time_sd = 1, value_mean = 5, value_sd = 2, first_bot = "CandidateBaker") {
+  
+  item_selections <- tribble(
+    ~"AffirmBaker", ~"CandidateBaker",
+  )
+  
+  items_list <<- generate_batch(item_count, time_mean, time_sd, value_mean, value_sd)
+  
+  bots_preffered_items <<- list(
+    AffirmBaker    = rank_preference(items_list, "value"),
+    CandidateBaker = rank_preference(items_list, "value/time")
+  )
+  
+  # NEW CODE
+  # This code arranges the items to be made by AffirmBaker. It's important to arrange them BEFORE the bots put together their day's list.
+  bots_preffered_items$AffirmBaker <- bots_preffered_items$AffirmBaker |>
+    mutate(sorting_metric = 1/time) |>
+    arrange(desc(sorting_metric))
+  
+  item_selections <<- allocate_production(first_bot = first_bot)
+  
+  daily_items <<- map(
+  .x = set_names(c("yes", "no")),
+  .f = ~map2(
+    .x = .x, 
+    .y = c("AffirmBaker", "CandidateBaker"),
+    .f = ~todays_possibile_items(.y) |> 
+      filter(make_today == .x) |> 
+      select(-cumulative_time)
+  ) |> 
+    setNames(c("AffirmBaker", "CandidateBaker")) 
+  )
+  
+  # NEW CODE:
+  # export the output to verify correct sorting after picking items.
+  verify_sorting_output <<- daily_items$yes$AffirmBaker |> 
+    mutate(sorting_metric = 1/time)
+  
+  unmade_items <<- daily_items$no
+  
+  todays_value <<- map(daily_items[["yes"]], calculate_value_today)
+  
+}
+```
+
+Now execute and observe results:
+
+```{r}
+# re-set counter to 0:
+initiate_blank_counters()
+
+for (i in 1:num_days) {
+    
+    # Run all the functions!
+    todays_results <- run_bakery(item_count = items_per_day, time_mean = 2, time_sd = 1, value_mean = 8, value_sd = 2)
+    
+    # Add the results to our scoreboard
+    daily_values <- daily_values |>
+      add_row(
+        day            = i,
+        AffirmBaker    = todays_results$AffirmBaker,
+        CandidateBaker = todays_results$CandidateBaker
+      )
+  }
+  
+daily_totals <- calculate_results()
+  
+plot_daily_results()
+plot_cumulative_results()
+```
+
+For this same data set, under the default regime, AffirmBaker won 20% of the days. With the change to sorting items based on value/time instead of value, AffirmBaker still won 20%.
+
+For this same data set, I also tested sorting based on time from short to long. With the same dataset, AffirmBaker won 10% of the time.
+
+While neither result are necessarily statistically significant, I see no material change in results when sorting based on value/time or based on time.
+
+### Change items created
+
+Instead of changing the sorting metric, what if I change the bakery items themselves to give AffirmBaker an advantage? Under the current item-creating regime, both time and value are randomly generated from a normal distribution. I will change this so that they generally linearly increasing in time and value and add some slight noise to each observation.
+
+```{r}
+# Re-code the generate batch function:
+
+generate_batch_linear <- function(item_count = items_per_day, time_mean = 1, time_sd = .5, value_mean = 1, value_sd = .5) {
+  
+  # these random vlaues serve as deviations from the trend line
+  random_times <- rnorm(n = item_count, mean = time_mean, sd = time_sd) |> 
+    round(1)
+  
+  random_values <- rnorm(n = item_count, mean = value_mean, sd = value_sd) |> 
+    round(1)
+  
+  items_list <- data.frame(
+    index = seq(1, item_count),
+    time  = seq(1:item_count)/4 + random_times,
+    value = seq(1:item_count)   + random_values
+  )
+}
+
+generate_batch_linear() |> 
+  ggplot(aes(x = time, y = value)) +
+  geom_point() +
+  geom_smooth(method=lm, formula = 'y ~ x') +
+  theme_minimal() +
+  theme(panel.grid = element_blank()) +
+  ggtitle("Today's Orders: A mostly linear relationship") 
+```
+
+Now we see items that are more realistic to a bakery: items that take the most time to produce are generally worth the most value!
+
+I'll re-run the experiment and have AffirmBaker sort on value/time:
+
+```{r}
+
+run_bakery_linear <- function(item_count = items_per_day, time_mean = 2, time_sd = 1, value_mean = 5, value_sd = 2) {
+  
+  item_selections <- tribble(
+    ~"AffirmBaker", ~"CandidateBaker",
+  )
+  
+  items_list <<- generate_batch_linear(item_count, time_mean, time_sd, value_mean, value_sd)
+  
+  bots_preffered_items <<- list(
+    AffirmBaker    = rank_preference(items_list, "value"),
+    CandidateBaker = rank_preference(items_list, "value/time")
+  )
+  
+  # NEW CODE
+  # This code arranges the items to be made by AffirmBaker. It's important to arrange them BEFORE the bots put together their day's list.
+  bots_preffered_items$AffirmBaker <- bots_preffered_items$AffirmBaker |>
+    mutate(sorting_metric = value/time) |>
+    arrange(desc(sorting_metric))
+  
+  item_selections <<- allocate_production(first_bot = "CandidateBaker")
+  
+  daily_items <<- map(
+  .x = set_names(c("yes", "no")),
+  .f = ~map2(
+    .x = .x, 
+    .y = c("AffirmBaker", "CandidateBaker"),
+    .f = ~todays_possibile_items(.y) |> 
+      filter(make_today == .x) |> 
+      select(-cumulative_time)
+  ) |> 
+    setNames(c("AffirmBaker", "CandidateBaker")) 
+  )
+  
+  # NEW CODE:
+  # export the output to verify correct sorting after picking items.
+  verify_sorting_output <<- daily_items$yes$AffirmBaker |> 
+    mutate(sorting_metric = value/time)
+  
+  unmade_items <<- daily_items$no
+  
+  todays_value <<- map(daily_items[["yes"]], calculate_value_today)
+  
+}
+
+# re-set counter to 0:
+initiate_blank_counters()
+
+for (i in 1:num_days) {
+    
+    # Run all the functions!
+    todays_results <- run_bakery_linear(item_count = items_per_day, time_mean = 1, time_sd = .25, value_mean = 1, value_sd = .25)
+    
+    # Add the results to our scoreboard
+    daily_values <- daily_values |>
+      add_row(
+        day            = i,
+        AffirmBaker    = todays_results$AffirmBaker,
+        CandidateBaker = todays_results$CandidateBaker
+      )
+  }
+  
+daily_totals <- calculate_results()
+  
+plot_items_picked()
+plot_daily_results()
+plot_cumulative_results()
+```
+
+Still same results - Candidate wins most days and the overall. However, I do find closer results when AffirmBaker sorts on time than when it sorts on value/time with these new items.
+
+### Let AffirmBaker pick first
+
+Each bot alternates choosing items, but thus far, CandidateBaker has always picked first. Under this test, I'll have AffirmBaker choose first.
+
+```{r}
+time_per_day <- 9
+initiate_blank_counters()
+
+run_competition(start_day = 1, num_days, first_bot = "AffirmBaker")
+
+daily_totals <- calculate_results()
+
+plot_items_picked()
+plot_daily_results()
+plot_cumulative_results()
+```
+
+Letting AffirmBaker chose first results in the largest material difference so far, but not significant enough to dominate CandidateBaker.
+
+## 3: Create a new, better bot
+
+*Knowing the strategies of CandidateBaker and AffirmBaker, Create a third baker with your name that beats both AffirmBaker and CandidateBaker and prove it.* 
+
+I explore a few possibilities to improving bot performance in the previous section: changing the types of items created, and changing which bot picks first. Because neither of these resulted in substantial impact, I will bypass them here and explore other options for performance improvement.
+
+First, I'll change AffirmBaker to beat CandidateBaker by increasing the time available per day to 16. Under this parameter, AffirmBaker edges out CandidateBaker to become the top bot.
+
+```{r}
+time_per_day  <- 16
+num_days      <- 10
+items_per_day <- item_count<- 10
+
+run_bakery <- function(item_count = items_per_day, time_mean = 2, time_sd = 1, value_mean = 5, value_sd = 2, first_bot = "CandidateBaker", candidate_metric = "value/time") {
+  
+  item_selections <- tribble(~"AffirmBaker", ~"CandidateBaker")
+  
+  items_list <<- generate_batch(item_count, time_mean, time_sd, value_mean, value_sd)
+  
+  bots_preffered_items <<- list(
+    AffirmBaker    = rank_preference(items_list, "value"),
+    CandidateBaker = rank_preference(items_list, candidate_metric)
+  )
+  
+  item_selections <<- allocate_production(first_bot = first_bot)
+  
+  daily_items <<- map(
+  .x = set_names(c("yes", "no")),
+  .f = ~map2(
+    .x = .x, 
+    .y = c("AffirmBaker", "CandidateBaker"),
+    .f = ~todays_possibile_items(.y) |> filter(make_today == .x)
+  ) |> 
+    setNames(c("AffirmBaker", "CandidateBaker"))
+)
+  
+  unmade_items <<- daily_items$no
+  
+  todays_value <<- map(daily_items[["yes"]], calculate_value_today)
+  
+}
+```
+
+```{r}
+initiate_blank_counters()
+
+for (i in 1:num_days) {
+    
+  # Run all the functions!
+  todays_results <- run_bakery(item_count = items_per_day, time_mean = 2, time_sd = 1, value_mean = 8, value_sd = 2, candidate_metric = "value/time")
+  
+  # Add the results to our scoreboard
+  daily_values <- daily_values |>
+    add_row(
+      day            = i,
+      AffirmBaker    = todays_results$AffirmBaker,
+      CandidateBaker = todays_results$CandidateBaker
+    )
+}
+
+daily_totals <- calculate_results()
+
+plot_daily_results()
+plot_cumulative_results()
+```
+
+Now to experiment. I'll test all possible combinations of the two parameters: value, value/time (default, shown above), and time.
+
+```{r}
+initiate_blank_counters()
+
+for (i in 1:num_days) {
+    
+  # Run all the functions!
+  todays_results <- run_bakery(item_count = items_per_day, time_mean = 2, time_sd = 1, value_mean = 8, value_sd = 2, candidate_metric = "1/time")
+  
+  # Add the results to our scoreboard
+  daily_values <- daily_values |>
+    add_row(
+      day            = i,
+      AffirmBaker    = todays_results$AffirmBaker,
+      CandidateBaker = todays_results$CandidateBaker
+    )
+}
+
+daily_totals <- calculate_results()
+
+plot_daily_results()
+plot_cumulative_results()
+```
+
+Having CandidateBaker sort purely on time produces worse results than ranking on value/time.
+
+Next I'll test it using the same metric as AffirmBaker: value
+
+```{r}
+initiate_blank_counters()
+
+for (i in 1:num_days) {
+    
+  # Run all the functions!
+  todays_results <- run_bakery(item_count = items_per_day, time_mean = 2, time_sd = 1, value_mean = 8, value_sd = 2, first_bot = "CandidateBaker", candidate_metric = "value")
+  
+  # Add the results to our scoreboard
+  daily_values <- daily_values |>
+    add_row(
+      day            = i,
+      AffirmBaker    = todays_results$AffirmBaker,
+      CandidateBaker = todays_results$CandidateBaker
+    )
+}
+
+daily_totals <- calculate_results()
+
+plot_daily_results()
+plot_cumulative_results()
+```
+
+This shows the only way I've found to help CandidateBaker beat AffirmBaker given the external environment: give it the same maximizing function and let it pick first.
