@@ -1,0 +1,120 @@
+\documentclass[margin, line]{res}
+
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    urlcolor=blue,
+}
+
+\usepackage{fontawesome5}
+
+\oddsidemargin -.5in
+\evensidemargin -.5in
+\textwidth=6.0in
+\itemsep=0in
+\parsep=0in
+
+\newenvironment{list2}{
+  \begin{list}{$\bullet$}{%
+      \setlength{\itemsep}{0.04in}
+      \setlength{\parsep}{0in} \setlength{\parskip}{0in}
+      \setlength{\topsep}{0.05in} \setlength{\partopsep}{0in} 
+      \setlength{\leftmargin}{\dimexpr 26pt-0.05in}}}
+    {\end{list}}
+
+\usepackage{setspace}
+\renewcommand{\baselinestretch}{1.0} 
+
+\usepackage{array}
+\newcolumntype{L}{>{\arraybackslash}p{4.5in}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\name{Michael Boerman \vspace*{2mm}}
+\address{Data scientist with M.S. and 3 years experience driving decisions by modeling financial and economic data.}
+\begin{resume}
+
+\vspace{-1mm}
+\section{\sc Contact}
+
+\faEnvelope  \hspace{1mm} {\ttfamily michaelboerman@hey.com} \hspace{7mm}
+\faPhone  \hspace{1mm} {\ttfamily 484-219-7563} \hspace{10mm}
+\faBriefcase \hspace{1mm} \href{https://www.michaelboerman.com/}{\ttfamily www.michaelboerman.com} \hspace{3.5mm}
+
+\vspace{0mm}
+
+
+\section{\sc Projects}
+
+\faChartLine \hspace{0.5mm} \href{https://michaelboerman.github.io/lockdown_severity_index/}{Covid Lockdown Severity Index}
+    \begin{list2}
+        \item Computed national and state indices to measure Covid-era lockdown policies
+        \item Previously used at the Federal Reserve Board; now free and open-source
+        \item Consulted for multiple students (especially from China) on creating similar indices
+    \end{list2}
+
+\faIcon{video} \hspace{0.5mm} \href{https://www.youtube.com/@explainedbymichael/videos}{YouTube channel for statistics education}
+    \begin{list2}
+        \item 3,000+ subscribers, 250k views, 2.5m impressions, 99\% like rate
+        \item 100\% free (no monetization, no sponsors)
+    \end{list2}
+
+\vspace{-.35cm}
+
+
+\section{\sc Professional \\ Job History }
+
+{\bf Discover Financial Services}\\
+
+\vspace{-.65cm}
+Lead Data Science Analyst \hfill October 2022 - Present\\
+\hspace*{3mm} 
+    Summary: Forecast credit chard charge-off rates using time-series econometrics
+\hspace*{3mm}
+    \begin{list2}
+        \item Decreased human errors and model re-runs by transforming messy development code into fully- tested, scaled, and deployed production code.
+        \item Provided CFO and VPs macroeconomic summaries weekly with automated reports (SQL, Python, R).
+        \item Reduced new-hire training time and increased team cross-training by writing and maintaining documentation for more than 15 processes and 7 tools using markdown and git.
+        \item Transitioned the team's code management from local folders to Github.
+    \end{list2}
+
+{\bf Federal Reserve Board of Governors}\\
+
+\vspace{-.65cm}
+
+Financial Systems Analyst (Data Engineering) \hfill December 2021 - October 2022\\
+\hspace*{3mm} 
+    Summary: Automate data ingestion and analysis for financial regulation data (CCAR).
+\hspace*{3mm}
+    \begin{list2}
+        \item Automated business processes, data ingestion, and data analysis with R, Python, and SQL.
+        \item Communicated performance metrics by creating interactive dashboards in R Shiny and Tableau.
+        \item Created machine learning models to detect outliers in bank submission data.
+    \end{list2}
+
+
+Senior Research Assistant (Data Science) \hfill May 2020 - December 2021 \\
+\hspace*{3mm}
+    Summary: Developed inflation and GDP forecasting models used in FOMC monetary policy.
+    
+    \begin{list2}
+        \item Collaborated with economists to create statistical models and econometric forecasts using state-space time series, dynamic factor models, and ARIMA models.
+        \item Deployed models to production using Gitlab CI/CD pipelines.
+        \item Wrote and refactored code in R and Matlab for more than 10 statistical models and over 50 unique visualizations across 30 git repositories. 
+        \item Developed and maintained 3 in-house R packages with over 100 functions used in 250+ scripts.
+    \end{list2}
+
+
+\section{\sc Education }
+
+{\bf Georgia Institute of Technology}, Atlanta, GA, USA \hfill August 2019 - May 2020\\
+M.S. in Applied Economics, concentration in statistics and econometrics \hfill GPA: 4.0
+
+
+{\bf University of Alabama in Huntsville}, Huntsville, AL, USA \hfill August 2015 - May 2019 \\
+B.S. in Industrial \& Systems Engineering; minor in Astrophysics \hfill GPA: 4.0
+
+\end{resume}
+
+\end{document}
