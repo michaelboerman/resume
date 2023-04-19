@@ -49,7 +49,6 @@ Summary: Automate data ingestion and analysis for financial regulation data (CCA
 - Federal Reserve Board - Senior Research Assistant (Data Science)
 05/2020 - 12/2021
 Summary: Supported monetary policy by writing statistical models for GDP and inflation. 
-
 	- Collaborated with economists to create statistical models and econometric forecasts using state-space time series, dynamic factor models, and ARIMA models.
 	- Deployed models to production using Gitlab CI/CD pipelines.
 	- Wrote and refactored code in R and Matlab for more than 10 statistical models and over 50 unique visualizations across 30 git repositories.
@@ -74,8 +73,3 @@ Time series analysis, econometrics, forecasting, regression analysis, predictive
 
 Programming Experience: 
 Python, R, SQL (Postgres, Snowflake), Airflow, git, linux, shell/bash scripts, Tableau, MATLAB
--------------------------------------------
-
-LinkedIn
-
-https://www.linkedin.com/in/michael-boerman
