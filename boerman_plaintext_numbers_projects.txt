@@ -42,8 +42,7 @@ Summary: Forecast credit chard charge-off rates using time series econometrics
 12/2021 - 10/2022
 Summary: Automate data ingestion and analysis for financial regulation data (CCAR).
 	- Saved 11 person-hours per week by automating business processes, data ingestion, and data analysis (SQL, Python, R).
-	- Communicated performance metrics to over 100 people across 7 teams by creating interactive dashboards (R Shiny and Tableau). 
-	- Saved 14 person-hours per week by building a machine learning model (KNN) to detect outliers in bank submission data.
+	- Communicated performance metrics to over 100 people across 7 teams by creating interactive dashboards (R Shiny, Tableau). 
 
 
 - Federal Reserve Board - Senior Research Assistant (Data Science)
